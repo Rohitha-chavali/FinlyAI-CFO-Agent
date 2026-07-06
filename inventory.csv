@@ -1,0 +1,7 @@
+sku,name,on_hand,safety_threshold,reorder_qty,unit_cost,vendor
+SKU-1001,Espresso Beans (1kg),8,20,100,9.50,Highlands Roasters
+SKU-1002,Oat Milk Cartons,42,30,60,2.10,GreenFarm Dairy Co.
+SKU-1003,12oz Paper Cups,150,500,2000,0.06,PackRight Supplies
+SKU-1004,Vanilla Syrup Bottles,14,10,24,4.75,SweetLine Ingredients
+SKU-1005,Chocolate Sauce Bottles,5,8,12,6.50,SweetLine Ingredients
+SKU-1006,Paper Napkins (1000s),12,15,30,3.25,PackRight Supplies
