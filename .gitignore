@@ -1,0 +1,18 @@
+# Environment files
+.env
+
+# SQLite databases
+*.db
+finlyai.db
+
+# Logs
+*.log
+finlyai.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Output directories
+output_pos/
+test_output_pos/
