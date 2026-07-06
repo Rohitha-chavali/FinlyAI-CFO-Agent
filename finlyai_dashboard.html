@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FinlyAI — Virtual CFO Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161B22;
+    --ink-2:#1F2733;
+    --paper:#ECE8DE;
+    --paper-dim:#C9C3B4;
+    --line: rgba(236,232,222,0.14);
+    --amber:#C7862E;
+    --green:#3E7A57;
+    --rust:#A34D3B;
+    --wire:#5C6B7A;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:40px 24px 80px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px; margin-bottom:36px;
+    flex-wrap:wrap; gap:16px;
+  }
+  .brand{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:34px;
+    letter-spacing:-0.01em;
+  }
+  .brand span{color:var(--amber);}
+  .tagline{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--wire);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-top:4px;
+  }
+  .runbar{ text-align:right; }
+  #runBtn{
+    background:var(--paper);
+    color:var(--ink);
+    border:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.04em;
+    padding:12px 22px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    text-transform:uppercase;
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  #runBtn:hover{ background:#fff; }
+  #runBtn:active{ transform: scale(0.97); }
+  #runBtn:disabled{ opacity:0.4; cursor:default; transform:none; }
+  .status-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--wire);
+    margin-top:8px;
+    min-height:14px;
+  }
+
+  .fragments{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-bottom:40px;
+  }
+  @media (max-width:720px){ .fragments{ grid-template-columns:1fr; } }
+
+  .fragment{
+    background:var(--ink);
+    padding:20px;
+    position:relative;
+    min-height:120px;
+    opacity:0.35;
+    transition:opacity 0.4s ease;
+  }
+  .fragment.active{ opacity:1; }
+  .frag-num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--wire);
+    letter-spacing:0.1em;
+  }
+  .frag-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:17px;
+    margin-top:6px;
+    margin-bottom:10px;
+  }
+  .frag-desc{
+    font-size:12.5px;
+    color:var(--paper-dim);
+    line-height:1.5;
+  }
+  .frag-pulse{
+    position:absolute; top:20px; right:20px;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--wire);
+  }
+  .fragment.working .frag-pulse{
+    background:var(--amber);
+    animation: pulse 0.9s infinite ease-in-out;
+  }
+  .fragment.done .frag-pulse{ background:var(--green); }
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.25; }
+  }
+
+  .ledger{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+  .ledger-head{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--wire);
+    padding:16px 24px 0;
+  }
+  .ledger-body{ padding:8px 0 20px; }
+
+  .entry{
+    display:grid;
+    grid-template-columns: 90px 1fr auto;
+    gap:16px;
+    align-items:baseline;
+    padding:12px 24px;
+    border-top:1px dashed var(--paper-dim);
+    opacity:0;
+    transform:translateY(6px);
+    animation: stamp 0.35s ease forwards;
+  }
+  .entry:first-child{ border-top:none; }
+  @keyframes stamp{
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .entry-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:3px 6px;
+    border-radius:2px;
+    width:fit-content;
+    height:fit-content;
+  }
+  .tag-ok{ background:rgba(62,122,87,0.15); color:var(--green); }
+  .tag-low{ background:rgba(199,134,46,0.18); color:var(--amber); }
+  .tag-po{ background:rgba(92,107,122,0.18); color:var(--wire); }
+  .tag-approve{ background:rgba(62,122,87,0.15); color:var(--green); }
+  .tag-hold{ background:rgba(163,77,59,0.18); color:var(--rust); }
+  .tag-conditions{ background:rgba(199,134,46,0.18); color:var(--amber); }
+
+  .entry-main{ font-size:13.5px; line-height:1.45; }
+  .entry-main b{ font-weight:600; }
+  .entry-sub{ font-size:11.5px; color:var(--wire); margin-top:2px; }
+  .entry-amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  .briefing{
+    margin-top:6px;
+    padding:20px 24px 4px;
+    border-top:1px solid var(--paper-dim);
+  }
+  .briefing-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:16px;
+    margin-bottom:12px;
+  }
+  .metric-row{
+    display:flex; gap:28px; flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .metric{ font-family:'IBM Plex Mono', monospace; }
+  .metric-label{ font-size:10.5px; color:var(--wire); text-transform:uppercase; letter-spacing:0.06em; }
+  .metric-val{ font-size:19px; font-weight:600; margin-top:2px; }
+  .risk-banner{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    padding:10px 14px;
+    border-radius:2px;
+    margin-bottom:16px;
+    display:inline-block;
+  }
+  .risk-safe{ background:rgba(62,122,87,0.15); color:var(--green); }
+  .risk-warn{ background:rgba(163,77,59,0.15); color:var(--rust); }
+
+  .empty{
+    padding:60px 24px;
+    text-align:center;
+    color:var(--wire);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+  }
+
+  footer{
+    margin-top:36px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--wire);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">Finly<span>AI</span></div>
+      <div class="tagline">Autonomous Virtual CFO — Fragments Pipeline</div>
+    </div>
+    <div class="runbar">
+      <button id="runBtn" onclick="runPipeline()">Run Pipeline</button>
+      <div class="status-line" id="statusLine">Idle — awaiting trigger</div>
+    </div>
+  </header>
+
+  <div class="fragments">
+    <div class="fragment" id="frag1">
+      <div class="frag-pulse"></div>
+      <div class="frag-num">FRAGMENT 01</div>
+      <div class="frag-title">Inventory Tracker</div>
+      <div class="frag-desc">Scans warehouse stock logs and flags items below their safety threshold.</div>
+    </div>
+    <div class="fragment" id="frag2">
+      <div class="frag-pulse"></div>
+      <div class="frag-num">FRAGMENT 02</div>
+      <div class="frag-title">Automated Billing</div>
+      <div class="frag-desc">Drafts vendor reorder purchase orders for every item Fragment 1 flags.</div>
+    </div>
+    <div class="fragment" id="frag3">
+      <div class="frag-pulse"></div>
+      <div class="frag-num">FRAGMENT 03</div>
+      <div class="frag-title">AI CFO Agent</div>
+      <div class="frag-desc">Runs a cash-flow impact analysis and issues an approval recommendation.</div>
+    </div>
+  </div>
+
+  <div class="ledger">
+    <div class="ledger-head">Run Ledger</div>
+    <div class="ledger-body" id="ledgerBody">
+      <div class="empty">No pipeline run yet. Click "Run Pipeline" to simulate a live cycle.</div>
+    </div>
+    <div id="briefingSlot"></div>
+  </div>
+
+  <footer>Takeover Hackathon 2026 · FinlyAI · all figures simulated for demo purposes</footer>
+</div>
+
+<script>
+const INVENTORY = [
+  { sku:"SKU-1001", name:"Espresso Beans (1kg)", onHand:8, threshold:20, reorderQty:100, unitCost:9.50, vendor:"Highlands Roasters" },
+  { sku:"SKU-1002", name:"Oat Milk Cartons", onHand:42, threshold:30, reorderQty:60, unitCost:2.10, vendor:"GreenFarm Dairy Co." },
+  { sku:"SKU-1003", name:"12oz Paper Cups", onHand:150, threshold:500, reorderQty:2000, unitCost:0.06, vendor:"PackRight Supplies" },
+  { sku:"SKU-1004", name:"Vanilla Syrup Bottles", onHand:14, threshold:10, reorderQty:24, unitCost:4.75, vendor:"SweetLine Ingredients" },
+];
+
+const CASH = {
+  cashOnHand: 18500.00,
+  arDue14d: 6200.00,
+  apDue14d: 3100.00,
+  dailyBurn: 420.00,
+};
+
+function money(n){
+  return "$" + n.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function setFragState(id, state){
+  const el = document.getElementById(id);
+  el.classList.remove("working","done","active");
+  if(state) el.classList.add(state, "active");
+}
+
+function addEntry(container, html, delay=0){
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = html;
+      container.appendChild(div);
+      resolve();
+    }, delay);
+  });
+}
+
+async function runPipeline(){
+  const btn = document.getElementById("runBtn");
+  const status = document.getElementById("statusLine");
+  const ledger = document.getElementById("ledgerBody");
+  const briefingSlot = document.getElementById("briefingSlot");
+  btn.disabled = true;
+  ledger.innerHTML = "";
+  briefingSlot.innerHTML = "";
+  [1,2,3].forEach(n => setFragState("frag"+n, null));
+
+  // FRAGMENT 1
+  status.textContent = "Fragment 1 — scanning stock logs...";
+  setFragState("frag1", "working");
+  await sleep(400);
+
+  const alerts = [];
+  for(const item of INVENTORY){
+    const low = item.onHand < item.threshold;
+    if(low) alerts.push(item);
+    await addEntry(ledger, `
+      <div class="entry-tag ${low ? 'tag-low' : 'tag-ok'}">${low ? 'Low stock' : 'OK'}</div>
+      <div>
+        <div class="entry-main"><b>${item.sku}</b> — ${item.name}</div>
+        <div class="entry-sub">On hand: ${item.onHand} · Safety threshold: ${item.threshold}</div>
+      </div>
+      <div class="entry-amt">${low ? 'TRIGGERED' : ''}</div>
+    `, 220);
+  }
+  setFragState("frag1", "done");
+  await sleep(250);
+
+  // FRAGMENT 2
+  status.textContent = "Fragment 2 — drafting purchase orders...";
+  setFragState("frag2", "working");
+  await sleep(400);
+
+  const drafts = [];
+  let poNum = 2026001;
+  for(const item of alerts){
+    const total = item.reorderQty * item.unitCost;
+    drafts.push({ ...item, poId: "PO-" + poNum, total });
+    await addEntry(ledger, `
+      <div class="entry-tag tag-po">Draft PO</div>
+      <div>
+        <div class="entry-main"><b>${"PO-" + poNum}</b> — ${item.reorderQty} × ${item.name}</div>
+        <div class="entry-sub">Vendor: ${item.vendor}</div>
+      </div>
+      <div class="entry-amt">${money(total)}</div>
+    `, 260);
+    poNum++;
+  }
+  if(drafts.length === 0){
+    await addEntry(ledger, `
+      <div class="entry-tag tag-ok">None</div>
+      <div><div class="entry-main">No purchase orders required this cycle.</div></div>
+      <div class="entry-amt"></div>
+    `, 200);
+  }
+  setFragState("frag2", "done");
+  await sleep(250);
+
+  // FRAGMENT 3
+  status.textContent = "Fragment 3 — running cash-flow impact analysis...";
+  setFragState("frag3", "working");
+  await sleep(600);
+
+  const totalOutflow = drafts.reduce((s,d) => s + d.total, 0);
+  const projected = CASH.cashOnHand + CASH.arDue14d - CASH.apDue14d - totalOutflow - (CASH.dailyBurn * 14);
+  const safetyFloor = CASH.dailyBurn * 30;
+  const risk = projected < safetyFloor;
+
+  const briefing = document.createElement("div");
+  briefing.className = "briefing";
+  briefing.innerHTML = `
+    <div class="briefing-title">CFO Briefing</div>
+    <div class="risk-banner ${risk ? 'risk-warn' : 'risk-safe'}">
+      ${risk ? '⚠ Cash flow risk detected' : '✔ Within safe operating range'}
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="metric-label">New Outflow</div><div class="metric-val">${money(totalOutflow)}</div></div>
+      <div class="metric"><div class="metric-label">Projected 14-Day Cash</div><div class="metric-val">${money(projected)}</div></div>
+      <div class="metric"><div class="metric-label">Safety Floor (30d burn)</div><div class="metric-val">${money(safetyFloor)}</div></div>
+    </div>
+  `;
+  briefingSlot.appendChild(briefing);
+  await sleep(150);
+
+  for(const d of drafts){
+    let decision, tagClass, reason;
+    if(!risk){
+      decision = "APPROVE"; tagClass = "tag-approve";
+      reason = "Sufficient liquidity to cover this order without breaching the safety floor.";
+    } else if(d.total < totalOutflow * 0.5){
+      decision = "APPROVE W/ CONDITIONS"; tagClass = "tag-conditions";
+      reason = "Approve on net-30 terms to preserve short-term liquidity.";
+    } else {
+      decision = "HOLD"; tagClass = "tag-hold";
+      reason = "Largest contributor to projected shortfall — hold until receivables clear.";
+    }
+    await addEntry(briefingSlot, `
+      <div class="entry-tag ${tagClass}">${decision}</div>
+      <div>
+        <div class="entry-main"><b>${d.poId}</b> — ${d.vendor}</div>
+        <div class="entry-sub">${reason}</div>
+      </div>
+      <div class="entry-amt">${money(d.total)}</div>
+    `, 260);
+  }
+
+  setFragState("frag3", "done");
+  status.textContent = "Pipeline complete — recommendation delivered.";
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
