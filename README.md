@@ -106,3 +106,4 @@ python -m unittest test_finlyai.py
 ## Demo Files
 - `finlyai_dashboard.html`: A premium visual dashboard mockup showcasing the "Fragments" architecture and ledger logs.
 - `inventory.csv`: Realistic SME inventory database file.
+"# FinlyAI-CFO-Agent" 
