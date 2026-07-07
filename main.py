@@ -99,6 +99,69 @@ def run_pipeline(
             
         return False
 
+def run_pipeline_api(
+    csv_path: str = "inventory.csv",
+    output_pos_dir: str = "output_pos",
+    db_path: str = "finlyai.db",
+):
+    """
+    Runs the pipeline and returns structured data for the API.
+    """
+
+    logging.info("Running FinlyAI API pipeline...")
+
+    database.init_db(db_path)
+
+    alerts = []
+    drafts = []
+
+    try:
+        inv_data = inventory.load_inventory_from_csv(csv_path)
+        alerts = inventory.run_inventory_tracker(inv_data)
+
+        drafts = billing.run_automated_billing(alerts)
+
+        analysis = cfo.run_cfo_agent(
+            drafts,
+            MOCK_CASH_POSITION
+        )
+
+        database.log_pipeline_run(
+            db_path=db_path,
+            run_type="api",
+            status="SUCCESS",
+            alerts_count=len(alerts),
+            po_count=len(drafts),
+            decision_json=json.dumps(analysis),
+            error_message=None,
+        )
+
+        return {
+            "success": True,
+            "alerts": alerts,
+            "purchaseOrders": drafts,
+            "cashPosition": MOCK_CASH_POSITION,
+            "analysis": analysis,
+        }
+
+    except Exception as e:
+
+        error_msg = str(e)
+
+        database.log_pipeline_run(
+            db_path=db_path,
+            run_type="api",
+            status="FAILED",
+            alerts_count=len(alerts),
+            po_count=len(drafts),
+            decision_json=None,
+            error_message=error_msg,
+        )
+
+        return {
+            "success": False,
+            "error": error_msg,
+        }
 
 def run_scheduler(interval_minutes: float, csv_path: str, output_pos_dir: str, db_path: str):
     """Starts the scheduler loop, running the pipeline every N minutes."""
