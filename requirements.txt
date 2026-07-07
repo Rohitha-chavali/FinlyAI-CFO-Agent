@@ -3,3 +3,5 @@ reportlab
 python-dotenv
 schedule
 pydantic
+fastapi==0.139.0
+uvicorn==0.50.2
