@@ -27,7 +27,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const res = await fetch("http://localhost:8000/dashboard");
+        const res = await fetch("https://finlyai-cfo-agent-2.onrender.com/dashboard");
         const json = await res.json();
         setData(json);
       } catch (err) {
